@@ -8,7 +8,8 @@ from src.core_logic import exceptions
 from .book_view import BookListView
 from .book_dialogs import AddBookDialog as AddBookDialogCtl, EditBookDialog as EditBookDialogCtl # Renamed to avoid conflict
 from .member_view import MemberListView
-from .member_dialogs import AddMemberDialog, EditMemberDialog # Added EditMemberDialog import
+from .member_dialogs import AddMemberDialog, EditMemberDialog
+from .borrow_dialogs import BorrowBookDialog, ReturnBookDialog # 导入借阅和归还对话框
 
 class LibraryApp(customtkinter.CTk):
     def __init__(self):
@@ -24,6 +25,7 @@ class LibraryApp(customtkinter.CTk):
         try:
             self.library_handler.load_books_from_csv("data/books.csv")
             self.library_handler.load_members_from_csv("data/members.csv")
+            self.library_handler.load_borrowings_from_csv("data/borrowings.csv")
             self.update_status("数据加载成功。", success=True)
         except FileNotFoundError as e:
             self.update_status(f"错误：数据文件未找到 ({e.filename})。请确保 data 文件夹下有相应文件。", success=False)
@@ -56,8 +58,8 @@ class LibraryApp(customtkinter.CTk):
         # --- 借阅管理菜单 ---
         borrow_menu = tkinter.Menu(self.menu_bar, tearoff=0)
         self.menu_bar.add_cascade(label="借阅管理", menu=borrow_menu)
-        borrow_menu.add_command(label="借阅书籍", command=self.placeholder_command)
-        borrow_menu.add_command(label="归还书籍", command=self.placeholder_command)
+        borrow_menu.add_command(label="借阅书籍", command=self.open_borrow_book_dialog)
+        borrow_menu.add_command(label="归还书籍", command=self.open_return_book_dialog)
 
         # --- 工具栏 ---
         self.toolbar_frame = customtkinter.CTkFrame(self, height=50)
@@ -70,10 +72,10 @@ class LibraryApp(customtkinter.CTk):
         btn_add_member = customtkinter.CTkButton(self.toolbar_frame, text="添加会员", command=self.open_add_member_dialog) # Correct: this will call the new method
         btn_add_member.pack(side="left", padx=5, pady=5)
 
-        btn_borrow_book = customtkinter.CTkButton(self.toolbar_frame, text="借阅书籍", command=self.placeholder_command)
+        btn_borrow_book = customtkinter.CTkButton(self.toolbar_frame, text="借阅书籍", command=self.open_borrow_book_dialog)
         btn_borrow_book.pack(side="left", padx=5, pady=5)
 
-        btn_return_book = customtkinter.CTkButton(self.toolbar_frame, text="归还书籍", command=self.placeholder_command)
+        btn_return_book = customtkinter.CTkButton(self.toolbar_frame, text="归还书籍", command=self.open_return_book_dialog)
         btn_return_book.pack(side="left", padx=5, pady=5)
 
         btn_show_all_books = customtkinter.CTkButton(self.toolbar_frame, text="所有书籍", command=lambda: self.switch_view("all_books"))
@@ -95,6 +97,7 @@ class LibraryApp(customtkinter.CTk):
         try:
             self.library_handler.save_books_to_csv("data/books.csv")
             self.library_handler.save_members_to_csv("data/members.csv")
+            self.library_handler.save_borrowings_to_csv("data/borrowings.csv")
         except Exception as e:
             import tkinter.messagebox
             tkinter.messagebox.showerror("保存错误", f"保存数据时发生错误: {e}")
@@ -162,6 +165,16 @@ class LibraryApp(customtkinter.CTk):
     
     def open_add_member_dialog(self): # This is for Members, should use AddMemberDialog
         dialog = AddMemberDialog(master=self, library_instance=self.library_handler)
+        # The dialog handles grab_set itself
+    
+    def open_borrow_book_dialog(self):
+        """Opens the borrow book dialog."""
+        dialog = BorrowBookDialog(master=self, library_instance=self.library_handler)
+        # The dialog handles grab_set itself
+    
+    def open_return_book_dialog(self):
+        """Opens the return book dialog."""
+        dialog = ReturnBookDialog(master=self, library_instance=self.library_handler)
         # The dialog handles grab_set itself
 
     def activate_book_search(self):

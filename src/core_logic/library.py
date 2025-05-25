@@ -1,11 +1,13 @@
-from .book import Book  
+from .book import Book
 from .exceptions import (BookNotFoundError, MemberNotFoundError, BookNotAvailableError,
     BookAlreadyExistsError, MemberAlreadyExistsError, InvalidCopyNumberError,
     BookNotBorrowedError
 )
+from .borrow_record import BorrowRecord
 
 import csv
 import os
+from datetime import datetime
 
 
 # 图书馆类
@@ -14,6 +16,8 @@ class Library(object):
     def __init__(self):
         self.books = {}
         self.members = {}
+        self.borrowings = {}  # 借阅记录字典，键为借阅ID，值为BorrowRecord对象
+        self.next_borrowing_id = 1  # 下一个可用的借阅ID
 
     # 将Book对象添加到books字典中。确保ISBN唯一。处理ISBN已存在的情况（例如更新副本或引发错误）。
     def add_book(self, book):
@@ -135,25 +139,80 @@ class Library(object):
             return False
 
     def borrow_book_item(self, isbn, member_id):
-        """处理借阅书籍的过程"""
+        """处理借阅书籍的过程，并创建借阅记录"""
         book = self.find_book_by_isbn(isbn)
         member = self.find_member_by_id(member_id)
+        
         if book.available_copies > 0:
+            # 减少可用副本数
             book.decrease_available_copies()
+            
+            # 更新会员的借阅书籍列表
             member.borrow_book(book)
+            
+            # 创建借阅记录
+            record_id = self.next_borrowing_id
+            self.next_borrowing_id += 1
+            
+            borrow_record = BorrowRecord(
+                record_id=record_id,
+                book_isbn=isbn,
+                member_id=member_id,
+                borrow_date=datetime.now()
+            )
+            
+            # 将借阅记录添加到借阅记录字典
+            self.borrowings[record_id] = borrow_record
+            
             return True
         else:
             raise BookNotAvailableError(f"《{book.title}》当前没有可借阅的副本")
 
     def return_book_item(self, isbn, member_id):
-        """处理书籍的归还过程"""
+        """处理书籍的归还过程，并更新借阅记录"""
         book = self.find_book_by_isbn(isbn)
         member = self.find_member_by_id(member_id)
+        
         if book in member.borrowed_books:
+            # 增加可用副本数
             book.increase_available_copies()
+            
+            # 更新会员的借阅书籍列表
             member.return_book(book)
+            
+            # 更新借阅记录
+            # 查找该会员借阅该书籍的未归还记录
+            for record in self.borrowings.values():
+                if (record.book_isbn == isbn and
+                    record.member_id == member_id and
+                    record.status == "已借出"):
+                    # 更新记录状态为已归还
+                    record.return_book()
+                    break
+            
+            return True
         else:
-            raise BookNotBorrowedError(f"会员‘{member.member_name}’未借阅《{book.title}》")
+            raise BookNotBorrowedError(f"会员'{member.member_name}'未借阅《{book.title}》")
+    
+    def get_member_borrowings(self, member_id):
+        """获取指定会员的所有借阅记录"""
+        return [record for record in self.borrowings.values()
+                if record.member_id == member_id]
+    
+    def get_book_borrowings(self, isbn):
+        """获取指定书籍的所有借阅记录"""
+        return [record for record in self.borrowings.values()
+                if record.book_isbn == isbn]
+    
+    def get_active_borrowings(self):
+        """获取所有未归还的借阅记录"""
+        return [record for record in self.borrowings.values()
+                if record.status == "已借出"]
+    
+    def get_overdue_borrowings(self):
+        """获取所有逾期的借阅记录"""
+        return [record for record in self.borrowings.values()
+                if record.status == "已借出" and record.is_overdue()]
 
     def display_all_books(self):
         """打印图书馆中所有书籍的信息"""
@@ -259,4 +318,56 @@ class Library(object):
             print(f"CSV 文件 '{filename}' 未找到。")
         except Exception as e:
             print(f"从 CSV 文件加载会员数据时发生错误: {e}")
-
+    
+    def save_borrowings_to_csv(self, filename="borrowings.csv"):
+        """保存借阅记录到 CSV 文件"""
+        try:
+            with open(filename, "w", encoding="utf8", newline="") as file:
+                w = csv.writer(file)
+                # 写入表头
+                w.writerow(["借阅ID", "书籍ISBN", "会员ID", "借阅日期", "预计归还日期", "实际归还日期", "状态"])
+                # 写入每条借阅记录
+                for record in self.borrowings.values():
+                    w.writerow(record.to_csv_row())
+                print(f"借阅记录已保存到文件'{filename}'")
+        except Exception as e:
+            print(f"保存借阅记录到文件'{filename}'失败：{e}")
+    
+    def load_borrowings_from_csv(self, filename="borrowings.csv"):
+        """从 CSV 文件中读取借阅记录"""
+        if not os.path.exists(filename):
+            print(f"文件'{filename}'不存在，正在创建空文件...")
+            with open(filename, "w", encoding="utf8", newline="") as file:
+                w = csv.writer(file)
+                w.writerow(["借阅ID", "书籍ISBN", "会员ID", "借阅日期", "预计归还日期", "实际归还日期", "状态"])
+                print(f"文件'{filename}'已创建，请添加借阅记录后再次尝试读取。")
+            return
+        
+        try:
+            with open(filename, "r", encoding="utf8") as file:
+                r = csv.reader(file)
+                # 跳过表头
+                next(r)
+                # 读取每条借阅记录
+                self.borrowings = {}
+                max_id = 0
+                
+                for row in r:
+                    if not row:  # 跳过空行
+                        continue
+                        
+                    record = BorrowRecord.from_csv_row(row)
+                    record_id = int(record.record_id)
+                    self.borrowings[record_id] = record
+                    
+                    # 更新next_borrowing_id
+                    if record_id > max_id:
+                        max_id = record_id
+                
+                self.next_borrowing_id = max_id + 1
+                
+            print(f"借阅记录已成功从 '{filename}' 文件加载。")
+        except FileNotFoundError:
+            print(f"CSV 文件 '{filename}' 未找到。")
+        except Exception as e:
+            print(f"从 CSV 文件加载借阅记录时发生错误: {e}")
