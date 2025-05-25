@@ -46,6 +46,15 @@ class Library(object):
                 matching_books.append(book)
         return matching_books
 
+    def find_books_by_title(self, title_keyword):
+        """根据书名关键词查找书籍 (大小写不敏感，部分匹配)"""
+        matching_books = []
+        title_keyword_lower = title_keyword.lower()
+        for book in self.books.values():
+            if title_keyword_lower in book.title.lower():
+                matching_books.append(book)
+        return matching_books
+
     def modify_book_details(self, isbn, title=None, author=None, publication_year=None, total_copies=None):
         """
         修改指定ISBN的图书信息。
@@ -89,7 +98,25 @@ class Library(object):
         if member_id in self.members:
             return self.members[member_id]
         else:
-            raise MemberNotFoundError(f"ID为‘{member_id}’的会员未找到")
+            raise MemberNotFoundError(f"ID为'{member_id}'的会员未找到")
+            
+    def find_members_by_name(self, name_keyword):
+        """根据会员姓名关键词查找会员 (大小写不敏感，部分匹配)"""
+        matching_members = []
+        name_keyword_lower = name_keyword.lower()
+        for member in self.members.values():
+            if name_keyword_lower in member.member_name.lower():
+                matching_members.append(member)
+        return matching_members
+    
+    def find_members_by_phone(self, phone_keyword):
+        """根据会员电话号码关键词查找会员 (部分匹配)"""
+        matching_members = []
+        for member in self.members.values():
+            if phone_keyword in member.phone:
+                matching_members.append(member)
+        return matching_members
+            
     def modify_member_details(self, member_id, name=None, phone=None):
         """
         修改指定ID的会员信息。

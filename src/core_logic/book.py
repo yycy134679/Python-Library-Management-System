@@ -44,7 +44,8 @@ class Book(object):
             raise Exception(f"逻辑错误：可用副本数 {self.available_copies} 不能大于总副本数 {self.total_copies}")
         else:
             self.available_copies += 1
-def update_book_info(self, title=None, author=None, publication_year=None, total_copies=None):
+
+    def update_book_info(self, title=None, author=None, publication_year=None, total_copies=None):
         """ 更新书籍信息 """
         if title is not None:
             self.title = title
@@ -71,4 +72,4 @@ def update_book_info(self, title=None, author=None, publication_year=None, total
             if self.available_copies > self.total_copies:
                 self.available_copies = self.total_copies
         
-        print(f"《{self.title}》(ISBN: {self.isbn}) 的信息已更新。")
+        # print(f"《{self.title}》(ISBN: {self.isbn}) 的信息已更新。") # 通常类方法不直接打印，而是由调用者处理反馈

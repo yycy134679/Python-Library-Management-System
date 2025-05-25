@@ -38,10 +38,11 @@ class LibraryMember(object):
             self.borrowed_books.remove(book)
         else:
             raise BookNotBorrowedError(f"{self.member_name}没有借阅书籍{book.title}")
-def update_member_info(self, name=None, phone=None):
+
+    def update_member_info(self, name=None, phone=None):
         """ 更新会员信息 (姓名, 电话) """
         if name is not None:
             self.member_name = name
         if phone is not None:
             self.phone = phone
-        print(f"会员 {self.member_id} ({self.member_name}) 的信息已更新。")
+        # print(f"会员 {self.member_id} ({self.member_name}) 的信息已更新。") # 通常类方法不直接打印
