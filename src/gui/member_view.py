@@ -1,134 +1,171 @@
 import customtkinter as ctk
+from . import styles # 新增
 
 class MemberListView(ctk.CTkFrame):
     def __init__(self, master, library_instance, master_app, **kwargs):
         super().__init__(master, **kwargs)
         self.library_instance = library_instance
-        self.master_app = master_app # Reference to the main application instance
+        self.master_app = master_app 
 
         # Configure grid layout
-        self.grid_columnconfigure(0, weight=1) # Main column for content
-        self.grid_rowconfigure(2, weight=1) # Row for the scrollable list (调整为第3行，因为第2行是表头)
+        self.grid_columnconfigure(0, weight=1) 
+        self.grid_rowconfigure(3, weight=1) # 修改: 为 info_label 和 header_frame 调整行号
 
         # --- Search Frame with multiple search types ---
         search_frame = ctk.CTkFrame(self, fg_color="transparent")
-        search_frame.grid(row=0, column=0, sticky="ew", padx=10, pady=(5,2))
-        search_frame.grid_columnconfigure(2, weight=1) # Allow search entry to expand
+        search_frame.grid(row=0, column=0, sticky="ew", padx=styles.PAD_X_MEDIUM, pady=(styles.PAD_Y_MEDIUM, styles.PAD_Y_SMALL))
+        search_frame.grid_columnconfigure(2, weight=1) 
 
-        # Search type selection
-        ctk.CTkLabel(search_frame, text="搜索类型:").pack(side="left", padx=(0,5))
+        ctk.CTkLabel(search_frame, text="搜索类型:", font=styles.FONT_ENTRY_LABEL).pack(side="left", padx=(0,styles.PAD_X_SMALL))
         self.search_type_var = ctk.StringVar(value="会员ID")
         search_type_options = ["会员ID", "姓名", "电话"]
-        self.search_type_menu = ctk.CTkOptionMenu(search_frame, variable=self.search_type_var, values=search_type_options)
-        self.search_type_menu.pack(side="left", padx=5)
+        self.search_type_menu = ctk.CTkOptionMenu(
+            search_frame, 
+            variable=self.search_type_var, 
+            values=search_type_options,
+            height=styles.HEIGHT_OPTIONMENU,
+            corner_radius=styles.CORNER_RADIUS_BUTTON,
+            font=styles.FONT_BUTTON
+        )
+        self.search_type_menu.pack(side="left", padx=styles.PAD_X_SMALL)
 
-        # Search entry
-        ctk.CTkLabel(search_frame, text="关键词:").pack(side="left", padx=(10,5))
-        self.search_entry = ctk.CTkEntry(search_frame, placeholder_text="输入搜索关键词...")
-        self.search_entry.pack(side="left", padx=5, fill="x", expand=True)
+        ctk.CTkLabel(search_frame, text="关键词:", font=styles.FONT_ENTRY_LABEL).pack(side="left", padx=(styles.PAD_X_MEDIUM,styles.PAD_X_SMALL))
+        self.search_entry = ctk.CTkEntry(
+            search_frame, 
+            placeholder_text="输入搜索关键词...",
+            height=styles.HEIGHT_ENTRY,
+            corner_radius=styles.CORNER_RADIUS_ENTRY,
+            font=styles.FONT_NORMAL
+        )
+        self.search_entry.pack(side="left", padx=styles.PAD_X_SMALL, fill="x", expand=True)
         self.search_entry.bind("<Return>", self.perform_search)
 
-        # Buttons
-        search_button = ctk.CTkButton(search_frame, text="搜索", width=80, command=self.perform_search)
-        search_button.pack(side="left", padx=5)
+        search_button = ctk.CTkButton(
+            search_frame, 
+            text="搜索", 
+            command=self.perform_search,
+            height=styles.HEIGHT_BUTTON,
+            width=80,
+            corner_radius=styles.CORNER_RADIUS_BUTTON,
+            font=styles.FONT_BUTTON,
+            fg_color=styles.PRIMARY_COLOR,
+            hover_color=styles.PRIMARY_COLOR_HOVER
+        )
+        search_button.pack(side="left", padx=styles.PAD_X_SMALL)
         
-        clear_search_button = ctk.CTkButton(search_frame, text="显示全部", width=100, command=self.show_all_members)
-        clear_search_button.pack(side="left", padx=(5,0))
+        clear_search_button = ctk.CTkButton(
+            search_frame, 
+            text="显示全部", 
+            command=self.show_all_members,
+            height=styles.HEIGHT_BUTTON,
+            width=100,
+            corner_radius=styles.CORNER_RADIUS_BUTTON,
+            font=styles.FONT_BUTTON,
+            fg_color=styles.SECONDARY_COLOR,
+            hover_color=styles.SECONDARY_COLOR_HOVER
+        )
+        clear_search_button.pack(side="left", padx=(styles.PAD_X_SMALL,0))
 
-        # --- 信息显示标签 (直接放在搜索框下方) ---
-        self.info_label = ctk.CTkLabel(self, text="", font=ctk.CTkFont(size=12))
-        self.info_label.grid(row=1, column=0, sticky="w", padx=15, pady=(0,0))
+        # --- Info Label for search results ---
+        self.info_label = ctk.CTkLabel(self, text="", font=styles.FONT_NORMAL) # 使用styles.FONT_NORMAL
+        self.info_label.grid(row=1, column=0, sticky="w", padx=styles.PAD_X_MEDIUM, pady=(styles.PAD_Y_SMALL, 0))
         
         # --- Header Frame for Table ---
         header_frame = ctk.CTkFrame(self, fg_color="transparent")
-        header_frame.grid(row=2, column=0, sticky="ew", padx=10, pady=(2,0))
-        # Adjust column weights as needed, 3 for data, 1 for actions
-        header_frame.grid_columnconfigure((0, 1, 2), weight=1)
-        header_frame.grid_columnconfigure(3, weight=0) # Actions column less weight or fixed
+        header_frame.grid(row=2, column=0, sticky="ew", padx=styles.PAD_X_MEDIUM, pady=(styles.PAD_Y_SMALL,0))
+        header_frame.grid_columnconfigure((0, 1, 2), weight=1) # 3 data columns
+        header_frame.grid_columnconfigure(3, weight=0) # Action column
 
-        # 使用更醒目的样式来显示表头
         headers = ["会员ID", "姓名", "电话", "操作"]
         for i, header_text in enumerate(headers):
-            label = ctk.CTkLabel(
+            label = ctk.CTkLabel( # 修改: 应用统一表头样式
                 header_frame,
                 text=header_text,
-                font=ctk.CTkFont(weight="bold", size=14),
-                fg_color="#3B8ED0",  # 使用主题色
-                corner_radius=6,
-                text_color="white"
+                font=styles.FONT_TABLE_HEADER,
+                fg_color=styles.PRIMARY_COLOR,
+                text_color="white",
+                corner_radius=styles.CORNER_RADIUS_TABLE_HEADER,
+                padx=styles.PAD_X_MEDIUM,
+                pady=styles.PAD_Y_SMALL
             )
-            sticky_val = "w"
-            if header_text == "操作":
-                sticky_val = "e" # Align "操作" to the right
-            elif header_text == "会员ID":
-                 sticky_val = "w" # Default
-            label.grid(row=0, column=i, padx=5, pady=5, sticky=sticky_val)
+            sticky_val = "ew"
+            # if header_text == "操作": # Sticky "e" is fine for action column header too
+            #     sticky_val = "e" 
+            label.grid(row=0, column=i, padx=(0 if i == 0 else styles.PAD_X_SMALL, 0 if i == len(headers)-1 else styles.PAD_X_SMALL), pady=styles.PAD_Y_SMALL, sticky=sticky_val)
 
 
-        # Scrollable Frame for member entries - 减小与上方元素的间距
+        # Scrollable Frame for member entries
         self.scrollable_frame = ctk.CTkScrollableFrame(self, fg_color="transparent")
-        self.scrollable_frame.grid(row=3, column=0, sticky="nsew", padx=10, pady=(0,5))
+        self.scrollable_frame.grid(row=3, column=0, sticky="nsew", padx=styles.PAD_X_MEDIUM, pady=(0,styles.PAD_Y_MEDIUM))
         self.scrollable_frame.grid_columnconfigure((0, 1, 2), weight=1)
         self.scrollable_frame.grid_columnconfigure(3, weight=0)
 
 
     def populate_table(self, members_data):
-        # Clear existing rows
         for widget in self.scrollable_frame.winfo_children():
             widget.destroy()
 
-        # 更新信息标签，显示结果数量
-        if members_data:
-            self.info_label.configure(text=f"共找到 {len(members_data)} 位会员", text_color="green")
-        else:
-            self.info_label.configure(text="没有可显示的会员信息", text_color="orange")
+        if not members_data: # 修改: 更新info_label颜色
+            self.info_label.configure(text="没有可显示的会员信息", text_color=styles.WARNING_COLOR)
             no_data_label = ctk.CTkLabel(
                 self.scrollable_frame,
-                text="没有可显示的会员信息。",
-                pady=20,
-                font=ctk.CTkFont(size=14),
-                text_color="gray"
+                text="没有可显示的会员数据。",
+                pady=styles.PAD_Y_LARGE,
+                font=styles.FONT_LARGE_NORMAL,
+                text_color=("gray60", "gray40")
             )
             no_data_label.grid(row=0, column=0, columnspan=4, sticky="ew")
             return
+        
+        self.info_label.configure(text=f"共找到 {len(members_data)} 位会员", text_color=styles.SUCCESS_COLOR) # 修改: 更新info_label颜色
 
         for i, member in enumerate(members_data):
-            # 为每一行创建一个背景框，使界面更美观
-            row_frame = ctk.CTkFrame(self.scrollable_frame, fg_color=("gray90", "gray20") if i % 2 == 0 else "transparent")
-            row_frame.grid(row=i, column=0, columnspan=4, sticky="ew", padx=2, pady=2)
+            # 修改: 使用统一样式实现Zebra Striping
+            row_fg_color = (styles.TABLE_ROW_LIGHT_EVEN, styles.TABLE_ROW_DARK_EVEN) if i % 2 == 0 else \
+                           (styles.TABLE_ROW_LIGHT_ODD, styles.TABLE_ROW_DARK_ODD)
+            row_frame = ctk.CTkFrame(self.scrollable_frame, fg_color=row_fg_color, corner_radius=styles.CORNER_RADIUS_FRAME / 2 if styles.CORNER_RADIUS_FRAME else 0)
+            row_frame.grid(row=i, column=0, columnspan=4, sticky="ew", pady=(styles.PAD_Y_SMALL / 2, styles.PAD_Y_SMALL / 2), padx=2)
             row_frame.grid_columnconfigure((0, 1, 2), weight=1)
             row_frame.grid_columnconfigure(3, weight=0)
             
             # Member ID
-            member_id_label = ctk.CTkLabel(row_frame, text=member.member_id, anchor="w")
-            member_id_label.grid(row=0, column=0, padx=5, pady=5, sticky="ew")
+            member_id_label = ctk.CTkLabel(row_frame, text=member.member_id, anchor="w", font=styles.FONT_TABLE_CELL)
+            member_id_label.grid(row=0, column=0, padx=styles.PAD_X_MEDIUM, pady=styles.PAD_Y_SMALL, sticky="ew")
 
             # Name
-            name_label = ctk.CTkLabel(row_frame, text=member.member_name, anchor="w")
-            name_label.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
+            name_label = ctk.CTkLabel(row_frame, text=member.member_name, anchor="w", font=styles.FONT_TABLE_CELL)
+            name_label.grid(row=0, column=1, padx=styles.PAD_X_MEDIUM, pady=styles.PAD_Y_SMALL, sticky="ew")
 
             # Phone
-            phone_label = ctk.CTkLabel(row_frame, text=member.phone, anchor="w")
-            phone_label.grid(row=0, column=2, padx=5, pady=5, sticky="ew")
+            phone_label = ctk.CTkLabel(row_frame, text=member.phone, anchor="w", font=styles.FONT_TABLE_CELL)
+            phone_label.grid(row=0, column=2, padx=styles.PAD_X_MEDIUM, pady=styles.PAD_Y_SMALL, sticky="ew")
             
             # Action buttons frame
             actions_frame = ctk.CTkFrame(row_frame, fg_color="transparent")
-            actions_frame.grid(row=0, column=3, padx=5, pady=2, sticky="e")
+            actions_frame.grid(row=0, column=3, padx=styles.PAD_X_SMALL, pady=0, sticky="e")
             
-            edit_button = ctk.CTkButton(
+            edit_button = ctk.CTkButton( # 修改: 应用按钮样式
                 actions_frame,
                 text="修改",
-                width=60,
+                width=styles.WIDTH_TABLE_ROW_ACTION_BUTTON,
+                height=styles.HEIGHT_TABLE_ROW_ACTION_BUTTON,
+                corner_radius=styles.CORNER_RADIUS_BUTTON / 1.5,
+                font=styles.FONT_BUTTON,
+                fg_color=styles.SECONDARY_COLOR,
+                hover_color=styles.SECONDARY_COLOR_HOVER,
                 command=lambda m_id=member.member_id: self.master_app.open_edit_member_dialog(m_id)
             )
-            edit_button.pack(side="left", padx=(0,5))
+            edit_button.pack(side="left", padx=(0,styles.PAD_X_SMALL))
 
-            delete_button = ctk.CTkButton(
+            delete_button = ctk.CTkButton( # 修改: 应用按钮样式
                 actions_frame,
                 text="删除",
-                width=60,
-                fg_color="red",
-                hover_color="darkred",
+                width=styles.WIDTH_TABLE_ROW_ACTION_BUTTON,
+                height=styles.HEIGHT_TABLE_ROW_ACTION_BUTTON,
+                corner_radius=styles.CORNER_RADIUS_BUTTON / 1.5,
+                font=styles.FONT_BUTTON,
+                fg_color=styles.DANGER_COLOR,
+                hover_color=styles.DANGER_COLOR_HOVER,
                 command=lambda m_id=member.member_id: self.master_app.confirm_delete_member(m_id)
             )
             delete_button.pack(side="left")
@@ -138,52 +175,89 @@ class MemberListView(ctk.CTkFrame):
         search_type = self.search_type_var.get()
         
         if not keyword:
-            self.master_app.update_status(f"请输入{search_type}关键词进行搜索。", success=False)
+            self.info_label.configure(text=f"请输入{search_type}关键词进行搜索。", text_color=styles.WARNING_COLOR) # 修改: 更新info_label
+            self.populate_table([])
             return
 
         found_members = []
         try:
             if search_type == "会员ID":
-                try:
-                    member = self.library_instance.find_member_by_id(keyword)
-                    if member:
-                        found_members = [member]
-                except:
-                    # 如果会员ID不存在，find_member_by_id可能会抛出异常
-                    # 我们捕获异常并保持found_members为空列表
-                    pass
+                member = self.library_instance.find_member_by_id(keyword) # find_member_by_id should raise MemberNotFoundError
+                if member:
+                    found_members = [member]
             elif search_type == "姓名":
                 found_members = self.library_instance.find_members_by_name(keyword)
             elif search_type == "电话":
                 found_members = self.library_instance.find_members_by_phone(keyword)
             
-            # 无论搜索结果如何，都更新表格
-            self.populate_table(found_members)
+            self.populate_table(found_members) # populate_table内部会更新info_label
             
-            # 更新状态栏
-            if found_members:
-                self.master_app.update_status(f"找到 {len(found_members)} 位符合{search_type}'{keyword}'的会员。", success=True)
-            else:
-                self.master_app.update_status(f"未找到符合{search_type}'{keyword}'的会员。", success=False)
+        except self.library_instance.MemberNotFoundError: # Assuming MemberNotFoundError is an exception in library_instance
+             self.populate_table([]) # Show no results
+             self.info_label.configure(text=f"未找到符合{search_type} '{keyword}' 的会员。", text_color=styles.WARNING_COLOR)
         except Exception as e:
-            self.master_app.update_status(f"搜索会员时发生错误: {e}", success=False)
+            self.info_label.configure(text=f"搜索会员时发生错误: {e}", text_color=styles.DANGER_COLOR) # 修改: 更新info_label
+            self.populate_table([])
             print(f"Member search error: {e}")
 
     def show_all_members(self):
         self.search_entry.delete(0, ctk.END)
         all_members_list = list(self.library_instance.members.values())
-        self.populate_table(all_members_list)
-        self.master_app.update_status(f"已显示所有 {len(all_members_list) if all_members_list else 0} 位会员。", success=True)
-        # 当显示全部会员时，清空搜索类型下拉框的选择
+        self.populate_table(all_members_list) # populate_table内部会更新info_label
         self.search_type_var.set("会员ID")
 
 if __name__ == '__main__':
     # Example Usage (for testing MemberListView independently)
+    # Note: This test App needs to be updated to reflect style changes if run directly
     class App(ctk.CTk):
         def __init__(self):
             super().__init__()
             self.title("Member List View Test")
             self.geometry("800x600")
+
+            # Mock styles for testing if styles.py is not fully integrated in this test
+            class MockStyles:
+                FONT_ENTRY_LABEL = ctk.CTkFont(size=12)
+                FONT_BUTTON = ctk.CTkFont(size=12)
+                FONT_TABLE_HEADER = ctk.CTkFont(size=14, weight="bold")
+                FONT_TABLE_CELL = ctk.CTkFont(size=12)
+                FONT_NORMAL = ctk.CTkFont(size=12)
+                FONT_LARGE_NORMAL = ctk.CTkFont(size=14)
+
+                PRIMARY_COLOR = "#3B8ED0"
+                PRIMARY_COLOR_HOVER = "#36719F"
+                SECONDARY_COLOR = "#6c757d"
+                SECONDARY_COLOR_HOVER = "#545b62"
+                DANGER_COLOR = "#dc3545"
+                DANGER_COLOR_HOVER = "#C82333"
+                SUCCESS_COLOR = "#28a745"
+                WARNING_COLOR = "#ffc107"
+                
+                TABLE_ROW_LIGHT_EVEN = "gray92"
+                TABLE_ROW_LIGHT_ODD = "gray98"
+                TABLE_ROW_DARK_EVEN = "gray22"
+                TABLE_ROW_DARK_ODD = "gray18"
+
+                PAD_X_SMALL = 5
+                PAD_Y_SMALL = 5
+                PAD_X_MEDIUM = 10
+                PAD_Y_MEDIUM = 10
+                PAD_Y_LARGE = 20
+                
+                HEIGHT_BUTTON = 30
+                HEIGHT_ENTRY = 30
+                HEIGHT_OPTIONMENU = 30
+                HEIGHT_TABLE_ROW_ACTION_BUTTON = 28
+                WIDTH_TABLE_ROW_ACTION_BUTTON = 60
+                
+                CORNER_RADIUS_BUTTON = 6
+                CORNER_RADIUS_ENTRY = 6
+                CORNER_RADIUS_FRAME = 0 
+                CORNER_RADIUS_TABLE_HEADER = 6
+            
+            global styles # Allow mocking global styles for test
+            _original_styles = styles
+            styles = MockStyles()
 
             class MockMember:
                 def __init__(self, member_id, member_name, phone):
@@ -192,6 +266,8 @@ if __name__ == '__main__':
                     self.phone = phone
             
             class MockLibrary:
+                MemberNotFoundError = type('MemberNotFoundError', (Exception,), {}) # Mock exception
+
                 def __init__(self):
                     self.members = {
                         "M001": MockMember("M001", "张三", "13800138000"),
@@ -199,7 +275,15 @@ if __name__ == '__main__':
                         "M003": MockMember("M003", "王五", "13700137000")
                     }
                 def find_member_by_id(self, member_id):
-                    return self.members.get(member_id)
+                    member = self.members.get(member_id)
+                    if not member:
+                        raise self.MemberNotFoundError(f"Member {member_id} not found")
+                    return member
+                def find_members_by_name(self, name_keyword):
+                    return [m for m in self.members.values() if name_keyword.lower() in m.member_name.lower()]
+                def find_members_by_phone(self, phone_keyword):
+                    return [m for m in self.members.values() if phone_keyword in m.phone]
+
 
             self.library_instance = MockLibrary()
             
@@ -208,26 +292,17 @@ if __name__ == '__main__':
             
             self.member_list_view.populate_table(list(self.library_instance.members.values()))
 
+            styles = _original_styles # Restore original styles
+
+
         def open_edit_member_dialog(self, member_id):
             print(f"Master app: Request to edit member with ID: {member_id}")
-            # Placeholder
-            dialog = ctk.CTkToplevel(self)
-            dialog.geometry("300x200")
-            dialog.title("Edit Member (Placeholder)")
-            label = ctk.CTkLabel(dialog, text=f"Editing member: {member_id}")
-            label.pack(padx=20, pady=20)
-
         def confirm_delete_member(self, member_id):
             print(f"Master app: Request to delete member with ID: {member_id}")
-            # Placeholder
-            dialog = ctk.CTkToplevel(self)
-            dialog.geometry("300x200")
-            dialog.title("Confirm Delete (Placeholder)")
-            label = ctk.CTkLabel(dialog, text=f"Confirm delete member: {member_id}?")
-            label.pack(padx=20, pady=20)
-        
-        def update_status(self, message, success=True):
+        def update_status(self, message, success=True): # Mock for testing
             print(f"Status Update: {message} (Success: {success})")
 
+    ctk.set_appearance_mode("System")
+    ctk.set_default_color_theme("blue")
     app = App()
     app.mainloop()
