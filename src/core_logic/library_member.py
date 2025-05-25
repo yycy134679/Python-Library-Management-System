@@ -1,4 +1,4 @@
-from library import BookNotBorrowedError
+from .exceptions import BookNotBorrowedError
 
 """
 图书馆会员管理模块

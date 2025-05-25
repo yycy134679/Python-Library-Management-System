@@ -1,5 +1,5 @@
-from book import Book  
-from exceptions import (BookNotFoundError, MemberNotFoundError, BookNotAvailableError,
+from .book import Book  
+from .exceptions import (BookNotFoundError, MemberNotFoundError, BookNotAvailableError,
     BookAlreadyExistsError, MemberAlreadyExistsError, InvalidCopyNumberError,
     BookNotBorrowedError
 )
@@ -219,7 +219,7 @@ class Library(object):
                 print(f"文件‘{filename}’已创建，请添加会员数据后再次尝试读取。")
             return
         try:
-            from library_member import LibraryMember
+            from .library_member import LibraryMember
             with open(filename, "r", encoding="utf8") as file:
                 r = csv.reader(file)
                 next(r)

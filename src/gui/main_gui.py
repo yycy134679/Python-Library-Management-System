@@ -1,11 +1,30 @@
 import customtkinter
 import tkinter # 导入 tkinter
 
+from src.core_logic.library import Library
+from src.core_logic.book import Book
+from src.core_logic.library_member import LibraryMember
+from src.core_logic import exceptions
+
 class LibraryApp(customtkinter.CTk):
     def __init__(self):
         super().__init__()
         self.title("图书馆管理系统")
         self.geometry("800x600")
+        self.library_handler = Library()
+
+        # --- 状态栏 --- (提前初始化)
+        self.status_bar = customtkinter.CTkLabel(self, text="正在初始化...", anchor="w")
+        self.status_bar.pack(side="bottom", fill="x", padx=5, pady=5)
+
+        try:
+            self.library_handler.load_books_from_csv("data/books.csv")
+            self.library_handler.load_members_from_csv("data/members.csv")
+            self.update_status("数据加载成功。", success=True)
+        except FileNotFoundError as e:
+            self.update_status(f"错误：数据文件未找到 ({e.filename})。请确保 data 文件夹下有相应文件。", success=False)
+        except Exception as e:
+            self.update_status(f"加载数据时发生错误: {e}", success=False)
 
         # --- 菜单栏 ---
         self.menu_bar = tkinter.Menu(self)
@@ -60,10 +79,6 @@ class LibraryApp(customtkinter.CTk):
         btn_show_all_members.pack(side="left", padx=5, pady=5)
 
 
-        # --- 状态栏 ---
-        self.status_bar = customtkinter.CTkLabel(self, text="欢迎使用图书馆管理系统", anchor="w")
-        self.status_bar.pack(side="bottom", fill="x", padx=5, pady=5) # 添加一些边距
-
         # --- 主内容区 ---
         self.main_content_frame = customtkinter.CTkFrame(self)
         self.main_content_frame.pack(side="top", fill="both", expand=True, padx=5, pady=0) # pady 调整为0，避免和状态栏重叠太多
@@ -73,7 +88,13 @@ class LibraryApp(customtkinter.CTk):
 
 
     def quit_application(self):
-        self.quit()
+        try:
+            self.library_handler.save_books_to_csv("data/books.csv")
+            self.library_handler.save_members_to_csv("data/members.csv")
+        except Exception as e:
+            import tkinter.messagebox
+            tkinter.messagebox.showerror("保存错误", f"保存数据时发生错误: {e}")
+        self.destroy()
 
     def placeholder_command(self):
         self.update_status("功能暂未实现", success=False)

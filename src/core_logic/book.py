@@ -1,4 +1,4 @@
-from exceptions import InvalidCopyNumberError, BookNotAvailableError  # 从 exceptions.py 导入异常类
+from .exceptions import InvalidCopyNumberError, BookNotAvailableError  # 从 exceptions.py 导入异常类
 
 # 图书类
 class Book(object):

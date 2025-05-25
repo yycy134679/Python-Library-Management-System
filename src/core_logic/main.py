@@ -1,8 +1,8 @@
 import os
-from library import Library
-from book import Book
-from library_member import LibraryMember
-from exceptions import (  # 从 exceptions.py 导入异常类
+from .library import Library
+from .book import Book
+from .library_member import LibraryMember
+from .exceptions import (
     BookNotFoundError, MemberNotFoundError, BookNotAvailableError,
     BookAlreadyExistsError, MemberAlreadyExistsError, InvalidCopyNumberError,
     BookNotBorrowedError
