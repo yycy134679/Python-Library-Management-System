@@ -65,11 +65,7 @@ class Book(object):
             delta_copies = total_copies - self.total_copies
             self.total_copies = total_copies
             self.available_copies += delta_copies
-            # 确保 available_copies 不会因为意外情况变成负数或超过 total_copies
-            # (尽管前面的逻辑应该已经处理了这一点)
             if self.available_copies < 0:
                 self.available_copies = 0
             if self.available_copies > self.total_copies:
                 self.available_copies = self.total_copies
-        
-        # print(f"《{self.title}》(ISBN: {self.isbn}) 的信息已更新。") # 通常类方法不直接打印，而是由调用者处理反馈

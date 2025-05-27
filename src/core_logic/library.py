@@ -19,31 +19,31 @@ class Library(object):
         self.borrowings = {}  # 借阅记录字典，键为借阅ID，值为BorrowRecord对象
         self.next_borrowing_id = 1  # 下一个可用的借阅ID
 
-    # 将Book对象添加到books字典中。确保ISBN唯一。处理ISBN已存在的情况（例如更新副本或引发错误）。
     def add_book(self, book):
+        """添加书籍到图书馆"""
         if book.isbn in self.books:
             raise BookAlreadyExistsError(f"ISBN为‘{book.isbn}’的书籍已存在，无法添加")
         else:
             self.books[book.isbn] = book
             return True
 
-    # 根据ISBN从books字典中移除书籍。处理ISBN未找到的情况。
     def remove_book(self, isbn):
+        """根据ISBN从图书馆中移除书籍"""
         if isbn in self.books:
             del self.books[isbn]
             return True
         else:
             raise BookNotFoundError(f"ISBN为‘{isbn}’的书籍未找到，无法删除")
 
-    # 通过ISBN在books字典中查找书籍，如果找到则返回Book对象
     def find_book_by_isbn(self, isbn):
+        """根据ISBN在books字典中查找书籍，如果找到则返回Book对象"""
         if isbn in self.books:
             return self.books[isbn]
         else:
             raise BookNotFoundError(f"ISBN为‘{isbn}’的书籍未找到")
 
-    # 返回给定作者所写的书籍列表。
     def find_books_by_author(self, author_name):
+        """根据作者名查找书籍"""
         matching_books = []
         for book in self.books.values():
             if author_name == book.author:
@@ -64,15 +64,13 @@ class Library(object):
         修改指定ISBN的图书信息。
         允许修改书名、作者、出版年份和总副本数。
         """
-        book = self.find_book_by_isbn(isbn) # 会在找不到时抛出 BookNotFoundError
+        book = self.find_book_by_isbn(isbn) 
         
         try:
             book.update_book_info(title=title,
                                   author=author,
                                   publication_year=publication_year,
                                   total_copies=total_copies)
-            # 更新信息后，如果图书数据持久化到CSV，可能需要重新保存
-            # self.save_books_to_csv() # 暂时注释掉，避免每次修改都保存，可以由调用者决定何时保存
             print(f"ISBN 为 '{isbn}' 的图书信息已成功更新。")
             return True
         except ValueError as ve:
@@ -81,16 +79,16 @@ class Library(object):
         except Exception as e:
             print(f"更新图书信息时发生未知错误：{e}")
             return False
-    # 将LibraryMember对象添加到members字典中。
     def add_member(self, member):
+        """添加会员到图书馆"""
         if member.member_id in self.members:
             raise MemberAlreadyExistsError(f"ID为‘{member.member_id}’的会员已存在，无法添加")
         else:
             self.members[member.member_id] = member
             return True
 
-    # 根据member_id从members字典中移除会员。处理member_id未找到的情况。
     def remove_member(self, member_id):
+        """根据会员ID从图书馆中移除会员"""
         if member_id in self.members:
             del self.members[member_id]
             return True
@@ -130,11 +128,9 @@ class Library(object):
         
         try:
             member.update_member_info(name=name, phone=phone)
-            # 更新信息后，如果会员数据持久化到CSV，可能需要重新保存
-            # self.save_members_to_csv() # 暂时注释掉，避免每次修改都保存
             print(f"会员 ID '{member_id}' 的信息已成功更新。")
             return True
-        except Exception as e: # 更通用的异常捕获，因为 update_member_info 目前不抛特定异常
+        except Exception as e: 
             print(f"更新会员信息时发生未知错误：{e}")
             return False
 
@@ -232,7 +228,7 @@ class Library(object):
         else:
             print("图书馆中没有会员")
 
-    def save_books_to_csv(self, filename="books.csv"):  # 将 filename 设置为可选参数，默认值为 "books.csv"
+    def save_books_to_csv(self, filename="books.csv"):  
         """保存书籍数据到 CSV 文件"""
         try:
             with open(filename, "w", encoding="utf8", newline="") as file:
@@ -275,12 +271,12 @@ class Library(object):
                     total_copies = int(total_copies)
                     available_copies = int(available_copies)
                     book = Book(title, author, isbn, publication_year, total_copies)
-                    book.available_copies = available_copies  # 从 CSV 加载时，需要设置正确的 available_copies
-                    self.books[isbn] = book  # 使用 ISBN 作为键添加到 books 字典
+                    book.available_copies = available_copies  
+                    self.books[isbn] = book  
             print(f"书籍数据已成功从 '{filename}' 文件加载。")
-        except FileNotFoundError:  # 明确捕获 FileNotFoundError 异常
+        except FileNotFoundError:  
             print(f"CSV 文件 '{filename}' 未找到。")
-        except Exception as e:  # 捕获其他可能的 CSV 读取或数据转换异常
+        except Exception as e: 
             print(f"从 CSV 文件加载书籍数据时发生错误: {e}")
 
     def save_members_to_csv(self, filename="members.csv"):
@@ -353,14 +349,13 @@ class Library(object):
                 max_id = 0
                 
                 for row in r:
-                    if not row:  # 跳过空行
+                    if not row:  
                         continue
                         
                     record = BorrowRecord.from_csv_row(row)
                     record_id = int(record.record_id)
                     self.borrowings[record_id] = record
                     
-                    # 更新next_borrowing_id
                     if record_id > max_id:
                         max_id = record_id
                 
