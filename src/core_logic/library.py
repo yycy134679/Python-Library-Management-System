@@ -9,6 +9,18 @@ import csv
 import os
 from datetime import datetime
 
+'''
+图书馆管理模块
+该模块定义了图书馆类(Library)，用于管理图书馆的书籍、会员和借阅记录。
+该模块包含以下功能：
+1. 添加、删除和查找书籍
+2. 添加、删除和查找会员
+3. 借阅和归还书籍
+4. 管理借阅记录
+5. 保存和加载书籍、会员和借阅记录到CSV文件
+'''
+
+
 
 # 图书馆类
 class Library(object):

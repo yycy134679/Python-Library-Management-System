@@ -1,3 +1,5 @@
+# 项目运行命令：py -m src.gui.main_gui
+
 import customtkinter
 import tkinter # 导入 tkinter
 

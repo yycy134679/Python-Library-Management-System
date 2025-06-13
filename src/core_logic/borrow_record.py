@@ -1,6 +1,11 @@
 """
 借阅记录模块
 该模块定义了借阅记录类(BorrowRecord)，用于管理图书馆的借阅记录。
+该模块包含以下功能：
+1. 创建借阅记录
+2. 更新借阅记录
+3. 查询借阅记录
+4. 删除借阅记录
 """
 
 from datetime import datetime, timedelta

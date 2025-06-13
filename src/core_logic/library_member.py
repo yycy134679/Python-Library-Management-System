@@ -3,6 +3,10 @@ from .exceptions import BookNotBorrowedError
 """
 图书馆会员管理模块
 该模块定义了图书馆会员类(LibraryMember)，用于管理图书馆会员的基本信息和借阅操作。
+成员类包含以下功能：
+1. 借阅书籍
+2. 归还书籍
+3. 更新会员信息
 """
 
 # 成员类

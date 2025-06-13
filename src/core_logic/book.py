@@ -1,5 +1,17 @@
 from .exceptions import InvalidCopyNumberError, BookNotAvailableError  # 从 exceptions.py 导入异常类
 
+'''
+图书类
+该模块定义了图书类(Book)，用于管理图书馆中的书籍信息和借阅操作。
+书籍类包含以下功能：
+1. 显示书籍信息
+2. 增加书籍副本数
+3. 减少当前可借阅的副本数
+4. 增加当前可借阅的副本数
+5. 更新书籍信息
+'''
+
+
 # 图书类
 class Book(object):
     # 属性：书名、作者、ISBN、出版年份、副本数、当前可借阅的副本数
