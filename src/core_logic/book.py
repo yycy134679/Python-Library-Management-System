@@ -11,7 +11,6 @@ from .exceptions import InvalidCopyNumberError, BookNotAvailableError  # 从 exc
 5. 更新书籍信息
 '''
 
-
 # 图书类
 class Book(object):
     # 属性：书名、作者、ISBN、出版年份、副本数、当前可借阅的副本数

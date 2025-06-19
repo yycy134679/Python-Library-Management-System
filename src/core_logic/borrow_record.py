@@ -1,6 +1,8 @@
+from datetime import datetime, timedelta
+
 """
 借阅记录模块
-该模块定义了借阅记录类(BorrowRecord)，用于管理图书馆的借阅记录。
+该模块定义了借阅记录类，用于管理图书馆的借阅记录。
 该模块包含以下功能：
 1. 创建借阅记录
 2. 更新借阅记录
@@ -8,25 +10,11 @@
 4. 删除借阅记录
 """
 
-from datetime import datetime, timedelta
-
 class BorrowRecord:
     """借阅记录类，表示一条借阅记录"""
     
     def __init__(self, record_id, book_isbn, member_id, borrow_date=None, 
                  expected_return_date=None, actual_return_date=None, status="已借出"):
-        """
-        初始化一条借阅记录
-        
-        参数:
-            record_id: 借阅记录ID，唯一标识一条借阅记录
-            book_isbn: 被借阅书籍的ISBN
-            member_id: 借阅会员的ID
-            borrow_date: 借阅日期和时间，默认为当前时间
-            expected_return_date: 预计归还日期，默认为借阅日期后30天
-            actual_return_date: 实际归还日期和时间，如果尚未归还则为None
-            status: 借阅记录的状态，可以是"已借出"或"已归还"
-        """
         self.record_id = record_id
         self.book_isbn = book_isbn
         self.member_id = member_id
